@@ -1,0 +1,46 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+venv/
+env/
+.venv/
+
+# Virtual environment
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# App data (auto-generated at runtime)
+database/users.db
+vectorstore/faiss.index
+vectorstore/chunks.json
+logs/
+docs/
+
+# Submission / private docs
+Submission_Docs.odt
+docs/Submission_Docs.odt
+
+# Keep folder structure
+!docs/.gitkeep
+!logs/.gitkeep
+!vectorstore/.gitkeep

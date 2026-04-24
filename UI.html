@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuMind — AI Document Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0f14;
+            --surface: #151820;
+            --surface2: #1c2030;
+            --border: #252a38;
+            --accent: #5b8af7;
+            --accent2: #7c5bf7;
+            --green: #3ecf8e;
+            --amber: #f0a050;
+            --red: #f06060;
+            --text: #e8eaf0;
+            --muted: #6b7280;
+            --mono: 'DM Mono', monospace;
+            --sans: 'DM Sans', sans-serif;
+            --display: 'Syne', sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        
+        /* ── AUTH ── */
+        .auth-screen { width: 100%; max-width: 420px; padding: 24px; }
+        .logo { text-align: center; margin-bottom: 40px; }
+        .logo h1 { font-family: var(--display); font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+        .logo h1 span { color: var(--accent); }
+        .logo p { color: var(--muted); font-size: 13px; margin-top: 6px; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+        .card h2 { font-family: var(--display); font-size: 20px; font-weight: 700; margin-bottom: 24px; }
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+        .field input { width: 100%; padding: 12px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: var(--sans); font-size: 14px; outline: none; transition: border-color .2s; }
+        .field input:focus { border-color: var(--accent); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 12px 20px; border: none; border-radius: 10px; font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .18s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: #4a7bf5; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--accent); border: 1px solid var(--border); }
+        .btn-ghost:hover { border-color: var(--accent); background: rgba(91,138,247,.08); }
+        .btn-danger { background: rgba(240,96,96,.12); color: var(--red); border: 1px solid rgba(240,96,96,.2); }
+        .btn-danger:hover { background: rgba(240,96,96,.2); }
+        .btn:disabled { opacity: .4; cursor: not-allowed; transform: none !important; }
+        .btn-full { width: 100%; }
+        .link { color: var(--accent); cursor: pointer; font-size: 13px; text-decoration: none; }
+        .link:hover { text-decoration: underline; }
+        .auth-footer { text-align: center; margin-top: 20px; color: var(--muted); font-size: 13px; }
+        .flash { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-top: 14px; }
+        .flash.error { background: rgba(240,96,96,.12); color: var(--red); border: 1px solid rgba(240,96,96,.2); }
+        .flash.success { background: rgba(62,207,142,.1); color: var(--green); border: 1px solid rgba(62,207,142,.2); }
+        .flash.info { background: rgba(91,138,247,.1); color: var(--accent); border: 1px solid rgba(91,138,247,.2); }
+
+        /* ── APP SHELL ── */
+        .app-screen { display: none; width: 100%; max-width: 1100px; height: 100vh; max-height: 780px; border: 1px solid var(--border); border-radius: 20px; overflow: hidden; background: var(--surface); flex-direction: column; }
+        .app-screen.active { display: flex; }
+
+        /* topbar */
+        .topbar { display: flex; align-items: center; gap: 12px; padding: 0 20px; height: 56px; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .topbar-logo { font-family: var(--display); font-weight: 800; font-size: 18px; letter-spacing: -.5px; margin-right: auto; }
+        .topbar-logo span { color: var(--accent); }
+        .user-badge { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 500; }
+        .avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+        /* main layout */
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* ── SIDEBAR ── */
+        .sidebar { width: 260px; background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-section { padding: 16px; border-bottom: 1px solid var(--border); }
+        .sidebar-section h3 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 12px; }
+        
+        /* drop zone */
+        .drop-zone { border: 2px dashed var(--border); border-radius: 10px; padding: 18px 12px; text-align: center; cursor: pointer; transition: all .2s; }
+        .drop-zone:hover, .drop-zone.over { border-color: var(--accent); background: rgba(91,138,247,.05); }
+        .drop-zone .dz-icon { font-size: 24px; margin-bottom: 6px; }
+        .drop-zone p { font-size: 12px; color: var(--muted); }
+        .drop-zone strong { font-size: 13px; color: var(--text); display: block; margin-bottom: 4px; }
+        input[type="file"] { display: none; }
+        .upload-btn-row { display: flex; gap: 8px; margin-top: 10px; }
+
+        /* file list */
+        .file-list { flex: 1; overflow-y: auto; }
+        .file-list::-webkit-scrollbar { width: 4px; }
+        .file-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .file-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,.03); transition: background .15s; position: relative; }
+        .file-item:hover { background: var(--surface2); }
+        .file-item.active { background: rgba(91,138,247,.1); border-left: 3px solid var(--accent); }
+        .file-item.all-files { border-left: 3px solid transparent; }
+        .file-item.all-files.active { border-left-color: var(--green); background: rgba(62,207,142,.08); }
+        .file-icon { font-size: 18px; flex-shrink: 0; }
+        .file-info { flex: 1; min-width: 0; }
+        .file-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .file-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+        .file-del { opacity: 0; padding: 3px 6px; border-radius: 5px; border: none; background: rgba(240,96,96,.15); color: var(--red); font-size: 11px; cursor: pointer; transition: opacity .15s; flex-shrink: 0; }
+        .file-item:hover .file-del { opacity: 1; }
+
+        /* ── CHAT AREA ── */
+        .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* chat header */
+        .chat-header { padding: 14px 20px; background: var(--bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+        .chat-header-icon { font-size: 22px; }
+        .chat-header-info { flex: 1; }
+        .chat-header-title { font-family: var(--display); font-size: 15px; font-weight: 700; }
+        .chat-header-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        
+        /* model bar */
+        .model-bar { display: flex; align-items: center; gap: 8px; padding: 10px 20px; background: var(--surface2); border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
+        .model-bar label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+        .model-pill { display: flex; align-items: center; gap: 5px; padding: 5px 12px; border: 1px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s; background: var(--surface); color: var(--muted); }
+        .model-pill:hover { border-color: var(--accent); color: var(--text); }
+        .model-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .rag-badge { margin-left: auto; font-size: 11px; padding: 4px 10px; background: rgba(62,207,142,.1); border: 1px solid rgba(62,207,142,.2); color: var(--green); border-radius: 20px; font-weight: 600; font-family: var(--mono); }
+
+        /* messages */
+        .messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+        .messages::-webkit-scrollbar { width: 4px; }
+        .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); gap: 10px; }
+        .empty-state .big-icon { font-size: 48px; opacity: .3; }
+        .empty-state p { font-size: 14px; }
+
+        .msg { display: flex; flex-direction: column; max-width: 80%; animation: slideUp .2s ease-out; }
+        @keyframes slideUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        .msg.user { align-self: flex-end; align-items: flex-end; }
+        .msg.assistant { align-self: flex-start; align-items: flex-start; }
+
+        .bubble { padding: 12px 16px; border-radius: 14px; font-size: 14px; line-height: 1.6; word-break: break-word; white-space: pre-wrap; }
+        .msg.user .bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+        .msg.assistant .bubble { background: var(--surface2); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+        .bubble.streaming::after { content: '▌'; color: var(--accent); animation: blink 0.8s infinite; }
+        @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+
+        .msg-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+        .tag { font-size: 11px; font-family: var(--mono); padding: 3px 8px; border-radius: 6px; font-weight: 500; }
+        .tag.model-tag { background: rgba(91,138,247,.12); color: var(--accent); }
+        .tag.source-tag { background: rgba(62,207,142,.1); color: var(--green); }
+        .tag.score-tag { background: rgba(240,160,80,.1); color: var(--amber); }
+        .tag.score-tag.high { background: rgba(62,207,142,.1); color: var(--green); }
+        .tag.score-tag.low { background: rgba(240,96,96,.1); color: var(--red); }
+
+        /* input */
+        .input-bar { display: flex; gap: 10px; padding: 14px 20px; background: var(--bg); border-top: 1px solid var(--border); align-items: center; flex-shrink: 0; }
+        .input-bar input { flex: 1; padding: 12px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: var(--sans); font-size: 14px; outline: none; transition: border-color .2s; }
+        .input-bar input:focus { border-color: var(--accent); }
+        .input-bar input::placeholder { color: var(--muted); }
+    </style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="authScreen" class="auth-screen">
+    <div class="logo">
+        <h1>Docu<span>Mind</span></h1>
+        <p>Your private AI document assistant</p>
+    </div>
+
+    <div id="loginPane" class="card">
+        <h2>Welcome back</h2>
+        <div class="field"><label>Username</label><input type="text" id="loginUser" placeholder="your username" autofocus></div>
+        <div class="field"><label>Password</label><input type="password" id="loginPass" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()"></div>
+        <button class="btn btn-primary btn-full" onclick="doLogin()">Sign in →</button>
+        <div id="loginMsg"></div>
+        <div class="auth-footer">No account? <a class="link" onclick="showPane('register')">Create one</a></div>
+    </div>
+
+    <div id="registerPane" class="card" style="display:none">
+        <h2>Create account</h2>
+        <div class="field"><label>Username</label><input type="text" id="regUser" placeholder="min 3 characters"></div>
+        <div class="field"><label>Password</label><input type="password" id="regPass" placeholder="min 6 characters"></div>
+        <div class="field"><label>Confirm password</label><input type="password" id="regPass2" placeholder="repeat password" onkeypress="if(event.key==='Enter')doRegister()"></div>
+        <button class="btn btn-primary btn-full" onclick="doRegister()">Create account →</button>
+        <div id="registerMsg"></div>
+        <div class="auth-footer">Have an account? <a class="link" onclick="showPane('login')">Sign in</a></div>
+    </div>
+</div>
+
+<!-- APP -->
+<div id="appScreen" class="app-screen">
+    <div class="topbar">
+        <div class="topbar-logo">Docu<span>Mind</span></div>
+        <div class="user-badge"><div class="avatar" id="avatar">U</div><span id="displayName"></span></div>
+        <button class="btn btn-ghost" style="padding:6px 14px;font-size:13px" onclick="doLogout()">Sign out</button>
+    </div>
+
+    <div class="layout">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <h3>Upload</h3>
+                <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                    <div class="dz-icon">📁</div>
+                    <strong>Add documents</strong>
+                    <p>PDF, DOCX, XLSX, CSV, DB, images…</p>
+                </div>
+                <input type="file" id="fileInput" multiple onchange="onFilePick()">
+                <div class="upload-btn-row">
+                    <button class="btn btn-primary" style="flex:1;font-size:13px;padding:9px 14px" id="uploadBtn" onclick="doUpload()" disabled>Upload</button>
+                    <button class="btn btn-ghost" style="font-size:13px;padding:9px 12px" onclick="clearPick()">✕</button>
+                </div>
+                <div id="uploadMsg"></div>
+            </div>
+
+            <div class="sidebar-section" style="flex:1;padding-bottom:0;border-bottom:none;display:flex;flex-direction:column;min-height:0">
+                <h3>Knowledge Bases</h3>
+                <div class="file-list" id="fileList">
+                    <!-- populated by loadFiles() -->
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAT -->
+        <div class="chat-area">
+            <div class="chat-header">
+                <div class="chat-header-icon" id="chatIcon">🌐</div>
+                <div class="chat-header-info">
+                    <div class="chat-header-title" id="chatTitle">All Documents</div>
+                    <div class="chat-header-sub" id="chatSub">Searching across all your uploaded files</div>
+                </div>
+                <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="clearCurrentHistory()">Clear history</button>
+            </div>
+
+            <div class="model-bar">
+                <label>Model:</label>
+                <div class="model-pill active" id="opt-llama-instant" onclick="selectModel('llama-instant')">⚡ Llama Instant <span style="opacity:.6;margin-left:4px">fastest</span></div>
+                <div class="model-pill" id="opt-qwen-qwq" onclick="selectModel('qwen-qwq')">🧠 Qwen 32B <span style="opacity:.6;margin-left:4px">advanced</span></div>
+                <div class="rag-badge">RAG ✓</div>
+            </div>
+
+            <div class="messages" id="messages">
+                <div class="empty-state">
+                    <div class="big-icon">🧠</div>
+                    <p>Select a knowledge base and ask anything</p>
+                </div>
+            </div>
+
+            <div class="input-bar">
+                <input type="text" id="qInput" placeholder="Ask a question…" onkeypress="if(event.key==='Enter')doAsk()">
+                <button class="btn btn-primary" id="sendBtn" onclick="doAsk()" style="padding:12px 20px">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+let token = null, username = null;
+let selectedFiles = [];
+let selectedModel = 'llama-instant';
+let activeFileId = null;   // null = all files
+
+// ── FILE TYPE ICONS
+function fileIcon(type) {
+    const map = { pdf:'📕', docx:'📘', doc:'📘', xlsx:'📗', xls:'📗', csv:'📊', db:'🗄️', pptx:'📙', txt:'📄', png:'🖼️', jpg:'🖼️', jpeg:'🖼️', odt:'📝' };
+    return map[type] || '📄';
+}
+
+// ── AUTH
+function showPane(name) {
+    document.getElementById('loginPane').style.display    = name==='login'    ? '' : 'none';
+    document.getElementById('registerPane').style.display = name==='register' ? '' : 'none';
+}
+
+async function doRegister() {
+    const user=v('regUser'), pass=v('regPass'), pass2=v('regPass2');
+    const msg=document.getElementById('registerMsg');
+    if(!user||!pass||!pass2) return flash(msg,'error','Fill in all fields.');
+    if(user.length<3)        return flash(msg,'error','Username min 3 chars.');
+    if(pass.length<6)        return flash(msg,'error','Password min 6 chars.');
+    if(pass!==pass2)         return flash(msg,'error','Passwords do not match.');
+    try {
+        const r = await fetch(`${API}/register`, post({username:user,password:pass}));
+        const d = await r.json();
+        if(r.ok) { flash(msg,'success','Account created! Redirecting…'); setTimeout(()=>{ document.getElementById('loginUser').value=user; showPane('login'); },1200); }
+        else flash(msg,'error',d.detail);
+    } catch { flash(msg,'error','Cannot connect to server.'); }
+}
+
+async function doLogin() {
+    const user=v('loginUser'), pass=v('loginPass');
+    const msg=document.getElementById('loginMsg');
+    if(!user||!pass) return flash(msg,'error','Fill in all fields.');
+    try {
+        const r = await fetch(`${API}/login`, post({username:user,password:pass}));
+        const d = await r.json();
+        if(r.ok) {
+            token=d.token; username=user;
+            document.getElementById('authScreen').style.display='none';
+            document.getElementById('appScreen').classList.add('active');
+            document.getElementById('displayName').textContent=username;
+            document.getElementById('avatar').textContent=username[0].toUpperCase();
+            loadFiles();
+        } else flash(msg,'error',d.detail);
+    } catch { flash(msg,'error','Cannot connect to server.'); }
+}
+
+function doLogout() {
+    token=null; username=null; selectedFiles=[]; activeFileId=null;
+    document.getElementById('authScreen').style.display='';
+    document.getElementById('appScreen').classList.remove('active');
+    document.getElementById('messages').innerHTML='<div class="empty-state"><div class="big-icon">🧠</div><p>Select a knowledge base and ask anything</p></div>';
+    showPane('login');
+}
+
+// ── MODEL SELECTOR
+function selectModel(key) {
+    selectedModel = key;
+    document.querySelectorAll('.model-pill').forEach(el=>el.classList.remove('active'));
+    document.getElementById(`opt-${key}`).classList.add('active');
+}
+
+// ── FILE MANAGEMENT
+async function loadFiles() {
+    try {
+        const r = await fetch(`${API}/files`, {headers: authH()});
+        const d = await r.json();
+        renderFileList(d.files || []);
+    } catch {}
+}
+
+function renderFileList(files) {
+    const list = document.getElementById('fileList');
+    let html = `
+        <div class="file-item all-files ${activeFileId===null?'active':''}" onclick="selectFile(null)">
+            <div class="file-icon">🌐</div>
+            <div class="file-info">
+                <div class="file-name">All Documents</div>
+                <div class="file-meta">Search across everything</div>
+            </div>
+        </div>`;
+    files.forEach(f => {
+        const icon = fileIcon(f.file_type);
+        const isActive = activeFileId === f.file_id;
+        html += `
+        <div class="file-item ${isActive?'active':''}" onclick="selectFile(${f.file_id}, '${escHtml(f.filename)}', '${f.file_type}', ${f.chunk_count})">
+            <div class="file-icon">${icon}</div>
+            <div class="file-info">
+                <div class="file-name" title="${escHtml(f.filename)}">${escHtml(f.filename)}</div>
+                <div class="file-meta">${f.chunk_count} chunks · ${f.file_type}</div>
+            </div>
+            <button class="file-del" onclick="event.stopPropagation();deleteFile(${f.file_id},'${escHtml(f.filename)}')" title="Delete">✕</button>
+        </div>`;
+    });
+    list.innerHTML = html;
+}
+
+function selectFile(fileId, filename, fileType, chunkCount) {
+    activeFileId = fileId;
+    clearMessages();
+    if(fileId === null) {
+        document.getElementById('chatIcon').textContent = '🌐';
+        document.getElementById('chatTitle').textContent = 'All Documents';
+        document.getElementById('chatSub').textContent = 'Searching across all your uploaded files';
+    } else {
+        document.getElementById('chatIcon').textContent = fileIcon(fileType);
+        document.getElementById('chatTitle').textContent = filename;
+        document.getElementById('chatSub').textContent = `${chunkCount} chunks · Isolated knowledge base`;
+    }
+    loadFiles(); // refresh active state
+    loadHistory(); // load chat history for this file/scope
+}
+
+async function deleteFile(fileId, filename) {
+    if(!confirm(`Delete "${filename}" and its knowledge base?`)) return;
+    const r = await fetch(`${API}/files/${fileId}`, {method:'DELETE', headers:authH()});
+    if(r.ok) {
+        if(activeFileId === fileId) selectFile(null);
+        loadFiles();
+    }
+}
+
+async function clearCurrentHistory() {
+    if(activeFileId !== null) {
+        await fetch(`${API}/files/${activeFileId}/clear-history`, {method:'POST', headers:authH()});
+    } else {
+        await fetch(`${API}/clear-history`, {method:'POST', headers:authH()});
+    }
+    clearMessages();
+}
+
+// ── UPLOAD
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
+dz.addEventListener('drop', e=>{
+    e.preventDefault(); dz.classList.remove('over');
+    selectedFiles = Array.from(e.dataTransfer.files);
+    document.getElementById('uploadBtn').disabled = !selectedFiles.length;
+});
+
+function onFilePick() {
+    selectedFiles = Array.from(document.getElementById('fileInput').files);
+    document.getElementById('uploadBtn').disabled = !selectedFiles.length;
+}
+function clearPick() {
+    selectedFiles = [];
+    document.getElementById('fileInput').value = '';
+    document.getElementById('uploadBtn').disabled = true;
+    document.getElementById('uploadMsg').innerHTML = '';
+}
+
+async function doUpload() {
+    if(!selectedFiles.length) return;
+    const btn = document.getElementById('uploadBtn');
+    const msg = document.getElementById('uploadMsg');
+    btn.disabled = true;
+    flash(msg, 'info', 'Processing…');
+    const fd = new FormData();
+    selectedFiles.forEach(f => fd.append('files', f));
+    try {
+        const r = await fetch(`${API}/upload`, {method:'POST', headers:authH(), body:fd});
+        const d = await r.json();
+        if(r.ok) {
+            flash(msg, 'success', `✓ ${d.success_count} file(s) ready`);
+            clearPick();
+            loadFiles();
+        } else flash(msg, 'error', d.detail || 'Upload failed');
+    } catch(e) { flash(msg, 'error', 'Upload error: '+e.message); }
+    btn.disabled = false;
+}
+
+// ── CHAT
+function clearMessages() {
+    document.getElementById('messages').innerHTML = '<div class="empty-state"><div class="big-icon">🧠</div><p>Select a knowledge base and ask anything</p></div>';
+}
+
+function addMsg(role, text) {
+    const box = document.getElementById('messages');
+    const es = box.querySelector('.empty-state'); if(es) es.remove();
+    const div = document.createElement('div'); div.className=`msg ${role}`;
+    const bub = document.createElement('div'); bub.className='bubble'; bub.textContent=text;
+    div.appendChild(bub);
+    if(role==='assistant') {
+        const meta = document.createElement('div'); meta.className='msg-meta';
+        div.appendChild(meta); bub._meta = meta;
+    }
+    box.appendChild(div); box.scrollTop=box.scrollHeight; return bub;
+}
+
+function scoreClass(s) {
+    if(s >= 0.6) return 'high';
+    if(s >= 0.35) return '';
+    return 'low';
+}
+
+function scoreLabel(s) {
+    if(s >= 0.6) return '▲ high relevance';
+    if(s >= 0.35) return '~ good relevance';
+    return '▼ low relevance';
+}
+
+async function doAsk() {
+    const inp = document.getElementById('qInput');
+    const q = inp.value.trim();
+    if(!q) return;
+
+    const sb = document.getElementById('sendBtn');
+    inp.disabled=true; sb.disabled=true; inp.value='';
+    addMsg('user', q);
+    const ab = addMsg('assistant',''); ab.classList.add('streaming');
+
+    let sources=[], modelUsed='', fullAnswer='', relevanceScore=null;
+
+    try {
+        const body = {question: q, model: selectedModel};
+        if(activeFileId !== null) body.file_id = activeFileId;
+
+        const r = await fetch(`${API}/stream/ask`, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json', ...authH()},
+            body: JSON.stringify(body)
+        });
+
+        if(!r.ok) {
+            ab.classList.remove('streaming');
+            ab.textContent = 'Error: ' + (await r.json()).detail;
+            inp.disabled=false; sb.disabled=false; inp.focus();
+            return;
+        }
+
+        const reader = r.body.getReader();
+        const dec = new TextDecoder();
+
+        while(true) {
+            const {done, value} = await reader.read();
+            if(done) break;
+            for(const line of dec.decode(value).split('\n')) {
+                if(!line.startsWith('data: ')) continue;
+                let data;
+                try { data = JSON.parse(line.slice(6)); } catch { continue; }
+
+                if(data.type === 'meta') {
+                    sources = data.sources || [];
+                    modelUsed = data.model_used || '';
+                    relevanceScore = data.relevance_score ?? null;
+                }
+                else if(data.type === 'chunk') {
+                    fullAnswer += data.content;
+                    ab.textContent = fullAnswer;
+                    document.getElementById('messages').scrollTop = 999999;
+                }
+                else if(data.type === 'error') {
+                    ab.classList.remove('streaming');
+                    ab.textContent = 'Error: ' + data.message;
+                }
+                else if(data.type === 'done') {
+                    ab.classList.remove('streaming');
+                    if(ab._meta) {
+                        ab._meta.innerHTML = '';
+                        // Model tag
+                        if(modelUsed) {
+                            const t = document.createElement('span'); t.className='tag model-tag';
+                            t.textContent = '🤖 ' + (modelUsed.split('/').pop() || modelUsed);
+                            ab._meta.appendChild(t);
+                        }
+                        // Source tags
+                        sources.forEach(s => {
+                            const t = document.createElement('span'); t.className='tag source-tag';
+                            t.textContent = '📄 ' + s; ab._meta.appendChild(t);
+                        });
+                        // Relevance score tag
+                        if(relevanceScore !== null) {
+                            const pct = Math.round(relevanceScore * 100);
+                            const cls = scoreClass(relevanceScore);
+                            const t = document.createElement('span');
+                            t.className = `tag score-tag ${cls}`;
+                            t.title = 'Cosine similarity between your query and retrieved document chunks. 0-35% = low match, 35-60% = good match, 60%+ = high match. Note: scores below 50% are normal and still indicate relevant content.';
+                            t.textContent = `relevance ${pct}% ${cls==='high'?'↑':cls==='low'?'↓':''}`;
+                            ab._meta.appendChild(t);
+                        }
+                    }
+                }
+            }
+        }
+    } catch(e) { ab.classList.remove('streaming'); ab.textContent='Error: '+e.message; }
+    inp.disabled=false; sb.disabled=false; inp.focus();
+}
+
+// ── HELPERS
+function v(id) { return document.getElementById(id).value.trim(); }
+function post(body) { return {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}; }
+function authH() { return {'Authorization': `Bearer ${token}`}; }
+function flash(el, type, text) { el.innerHTML = `<div class="flash ${type}" style="margin-top:10px">${text}</div>`; }
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// ── LOAD HISTORY
+async function loadHistory() {
+    try {
+        const url = activeFileId !== null ? `${API}/history?file_id=${activeFileId}` : `${API}/history`;
+        const r = await fetch(url, {headers: authH()});
+        if(!r.ok) return;
+        const d = await r.json();
+        if(d.history && d.history.length > 0) {
+            clearMessages();
+            d.history.forEach(msg => {
+                const bub = addMsg(msg.role, msg.content);
+                // Don't add meta tags for history messages to keep it clean
+            });
+        }
+    } catch(e) {
+        console.error('Failed to load history:', e);
+    }
+}
+
+</script>
+</body>
+</html>

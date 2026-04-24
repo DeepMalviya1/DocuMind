@@ -1,0 +1,16 @@
+python-docx
+python-pptx
+pandas
+openpyxl
+xlrd
+Pillow
+pytesseract
+fastapi
+uvicorn
+python-multipart
+PyMuPDF
+odfpy
+groq
+python-dotenv
+faiss-cpu
+sentence-transformers
