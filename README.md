@@ -79,7 +79,7 @@
 
 ---
 
-## 📸 Screenshots
+## 📸 SneakPeaks
 
 > 📁 Place screenshots in **`assets/screenshots/`** — they appear below automatically.
 
@@ -109,11 +109,11 @@
 <table>
 <tr>
 <td align="center" width="50%">
-<img src="assets/screenshots/upload.png" alt="Upload" width="100%" /><br>
+<img src="assets/screenshots/Upload.png" alt="Upload" width="100%" /><br>
 <b>Upload Documents</b>
 </td>
 <td align="center" width="50%">
-<img src="assets/screenshots/chat.png" alt="Chat" width="100%" /><br>
+<img src="assets/screenshots/Chat.png" alt="Chat" width="100%" /><br>
 <b>Chat with Documents</b>
 </td>
 </tr>
@@ -123,7 +123,7 @@
 
 ### 📡 API Playground
 
-<img src="assets/screenshots/swagger.png" alt="Swagger UI" width="80%" /><br>
+<img src="assets/screenshots/Swagger.png" alt="Swagger UI" width="80%" /><br>
 <b>Swagger Interactive Docs</b>
 
 </div>
