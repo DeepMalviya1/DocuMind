@@ -79,8 +79,7 @@
 
 ---
 
-## 📸 SneakPeaks
-
+## 📸 Some Glimpse of UI
 > 📁 Place screenshots in **`assets/screenshots/`** — they appear below automatically.
 
 <br>
