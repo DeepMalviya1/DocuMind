@@ -4,7 +4,7 @@
 
 <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&weight=700&size=52&duration=3000&pause=1000&color=4A7BF5&center=true&vCenter=true&width=600&height=70&lines=DocuMind" alt="DocuMind" />
 
-### 🧠 Chat With Any Document. Powered by AI.
+### 🧠 Chat With Any Document. Powered by AI
 
 <p align="center">
 <em>Upload a PDF, Excel, Word, image, or database — ask anything in plain English.</em><br>
